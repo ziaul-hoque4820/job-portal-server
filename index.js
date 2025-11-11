@@ -49,7 +49,6 @@ async function run() {
 
         app.post('/jobs', async(req, res) => {
             const newJob = req.body;
-            console.log(newJob);
             const result = await jobsCollection.insertOne(newJob);
             res.send(result);
         })
@@ -80,7 +79,18 @@ async function run() {
             res.send(result);
         })
 
-        
+        app.patch('/applications/:id', async (req, res) => {
+            const id = req.params.id;
+            const updatedStatus = req.body.status;
+            const filter = { _id: new ObjectId(id) };
+            const updateDoc = {
+                $set: {
+                    status: updatedStatus
+                },
+            };
+            const result = await applicationsCollection.updateOne(filter, updateDoc);
+            res.send(result);
+        })
 
 
 
