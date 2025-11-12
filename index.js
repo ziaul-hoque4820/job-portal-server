@@ -8,9 +8,12 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 // middlewares
-app.use(cors());
+app.use(cors({
+    origin: ['http://localhost:5173'],
+    credentials: true,
+}));
 app.use(express.json());
-
+app.use(cookiesParser());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.kogn06a.mongodb.net/?appName=Cluster0`;
 
@@ -34,7 +37,13 @@ async function run() {
         app.post('/jwt', async (req, res) => {
             const userData = req.body;
             const token = jwt.sign(userData, process.env.JWT_SECRET, { expiresIn: '1h' });
-            res.send({ success: true, token });
+
+            // Send token in cookie
+            res.cookie('token', token, {
+                httpOnly: true,
+                secure: false,
+            });
+            res.send({ success: true });
         })
 
 
@@ -42,7 +51,7 @@ async function run() {
         app.get('/jobs', async (req, res) => {
             const email = req.query.email;
             let query = {};
-            if(email){
+            if (email) {
                 query.hr_email = email;
             }
             const cursor = jobsCollection.find(query);
@@ -57,7 +66,7 @@ async function run() {
             res.send(result);
         })
 
-        app.post('/jobs', async(req, res) => {
+        app.post('/jobs', async (req, res) => {
             const newJob = req.body;
             const result = await jobsCollection.insertOne(newJob);
             res.send(result);
@@ -73,6 +82,9 @@ async function run() {
 
         app.get('/applications', async (req, res) => {
             const email = req.query.email;
+
+            console.log('inside application api',  req.cookies);
+            
             let query = {
                 applicantEmail: email
             };
