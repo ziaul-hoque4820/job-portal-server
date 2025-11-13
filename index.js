@@ -15,6 +15,28 @@ app.use(cors({
 app.use(express.json());
 app.use(cookiesParser());
 
+const logger = (req, res, next) => {
+    console.log('inside the logger middleware:');
+    next();
+}
+
+const verifyToken = (req, res, next) => {
+    const token = req?.cookies?.token;
+    console.log('cookie in the middleware', req.cookies);
+    if (!token) {
+        return res.status(401).send({ error: true, message: 'unauthorized access' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).send({ error: true, message: 'forbidden access' });
+        }
+
+        req.decoded = decoded;
+        next();
+    });
+}
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.kogn06a.mongodb.net/?appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -80,11 +102,14 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/applications', async (req, res) => {
+        app.get('/applications', logger, verifyToken, async (req, res) => {
             const email = req.query.email;
 
-            console.log('inside application api',  req.cookies);
-            
+            // console.log('inside application api', req.cookies);
+            // if (email !== req.decoded.email) {
+            //     return res.status(403).send({ error: true, message: 'forbidden access' });
+            // }
+
             let query = {
                 applicantEmail: email
             };
