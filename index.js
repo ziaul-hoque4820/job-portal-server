@@ -105,10 +105,10 @@ async function run() {
         app.get('/applications', logger, verifyToken, async (req, res) => {
             const email = req.query.email;
 
-            // console.log('inside application api', req.cookies);
-            // if (email !== req.decoded.email) {
-            //     return res.status(403).send({ error: true, message: 'forbidden access' });
-            // }
+            console.log('inside application api', req.cookies);
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ error: true, message: 'forbidden access' });
+            }
 
             let query = {
                 applicantEmail: email
