@@ -15,6 +15,16 @@ app.use(cors({
 app.use(express.json());
 app.use(cookiesParser());
 
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./firebase-adminsdk.json");
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+
+// verify jwt token middleware
 const logger = (req, res, next) => {
     console.log('inside the logger middleware:');
     next();
@@ -22,7 +32,7 @@ const logger = (req, res, next) => {
 
 const verifyToken = (req, res, next) => {
     const token = req?.cookies?.token;
-    console.log('cookie in the middleware', req.cookies);
+    // console.log('cookie in the middleware', req.cookies);
     if (!token) {
         return res.status(401).send({ error: true, message: 'unauthorized access' });
     }
@@ -35,6 +45,20 @@ const verifyToken = (req, res, next) => {
         req.decoded = decoded;
         next();
     });
+}
+
+const verifyFirebaseToken = async (req, res, next) => {
+    try {
+        const token = req?.headers?.authorization?.split(' ')[1];
+        if (!token) return res.status(401).send({ error: true, message: 'unauthorized access' });
+
+        const userInfo = await admin.auth().verifyIdToken(token);
+        req.tokenEmail = userInfo.email;
+        next();
+    } catch (err) {
+        console.error('Firebase token verify error:', err);
+        res.status(403).send({ error: true, message: 'forbidden access' });
+    }
 }
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.kogn06a.mongodb.net/?appName=Cluster0`;
@@ -70,7 +94,12 @@ async function run() {
 
 
         // jobs API
-        app.get('/jobs', async (req, res) => {
+        app.get('/jobs', verifyFirebaseToken, async (req, res) => {
+
+            if (req.tokenEmail !== req.query.email) {
+                return res.status(403).send({ error: true, message: 'forbidden access' });
+            }
+
             const email = req.query.email;
             let query = {};
             if (email) {
@@ -105,7 +134,7 @@ async function run() {
         app.get('/applications', logger, verifyToken, async (req, res) => {
             const email = req.query.email;
 
-            console.log('inside application api', req.cookies);
+            // console.log('inside application api', req.cookies);
             if (email !== req.decoded.email) {
                 return res.status(403).send({ error: true, message: 'forbidden access' });
             }
