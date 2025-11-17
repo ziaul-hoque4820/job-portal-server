@@ -9,7 +9,7 @@ require('dotenv').config();
 
 // middlewares
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://job-portal-client-woad-xi.vercel.app/'],
+    origin: ['http://localhost:5173', 'https://job-portal-client-flax.vercel.app'],
     credentials: true,
 }));
 app.use(express.json());
