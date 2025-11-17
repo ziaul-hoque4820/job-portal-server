@@ -9,7 +9,7 @@ require('dotenv').config();
 
 // middlewares
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5173', 'https://job-portal-client-woad-xi.vercel.app/'],
     credentials: true,
 }));
 app.use(express.json());
@@ -17,7 +17,22 @@ app.use(cookiesParser());
 
 var admin = require("firebase-admin");
 
-var serviceAccount = require("./firebase-adminsdk.json");
+var serviceAccount = {
+    type: process.env.FIREBASE_TYPE,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+
+    // VERY IMPORTANT: convert \n to actual newlines
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    auth_uri: process.env.FIREBASE_AUTH_URI,
+    token_uri: process.env.FIREBASE_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT,
+    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
+};
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -87,7 +102,8 @@ async function run() {
             // Send token in cookie
             res.cookie('token', token, {
                 httpOnly: true,
-                secure: false,
+                secure: true,
+                sameSite: "none"
             });
             res.send({ success: true });
         })
@@ -169,22 +185,15 @@ async function run() {
         })
 
 
-
-
-
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
     }
 }
 run().catch(console.dir);
-
-
-
-
 
 app.get('/', (req, res) => {
     res.send('Job Portal server is run successfully')
