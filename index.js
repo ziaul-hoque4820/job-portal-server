@@ -15,28 +15,28 @@ app.use(cors({
 app.use(express.json());
 app.use(cookiesParser());
 
-var admin = require("firebase-admin");
+// var admin = require("firebase-admin");
 
-var serviceAccount = {
-    type: process.env.FIREBASE_TYPE,
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+// var serviceAccount = {
+//     type: process.env.FIREBASE_TYPE,
+//     project_id: process.env.FIREBASE_PROJECT_ID,
+//     private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
 
-    // VERY IMPORTANT: convert \n to actual newlines
-    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+//     // VERY IMPORTANT: convert \n to actual newlines
+//     private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
 
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: process.env.FIREBASE_AUTH_URI,
-    token_uri: process.env.FIREBASE_TOKEN_URI,
-    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT,
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT,
-    universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
-};
+//     client_email: process.env.FIREBASE_CLIENT_EMAIL,
+//     client_id: process.env.FIREBASE_CLIENT_ID,
+//     auth_uri: process.env.FIREBASE_AUTH_URI,
+//     token_uri: process.env.FIREBASE_TOKEN_URI,
+//     auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT,
+//     client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT,
+//     universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
+// };
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+// admin.initializeApp({
+//     credential: admin.credential.cert(serviceAccount)
+// });
 
 
 // verify jwt token middleware
@@ -62,19 +62,19 @@ const verifyToken = (req, res, next) => {
     });
 }
 
-const verifyFirebaseToken = async (req, res, next) => {
-    try {
-        const token = req?.headers?.authorization?.split(' ')[1];
-        if (!token) return res.status(401).send({ error: true, message: 'unauthorized access' });
+// const verifyFirebaseToken = async (req, res, next) => {
+//     try {
+//         const token = req?.headers?.authorization?.split(' ')[1];
+//         if (!token) return res.status(401).send({ error: true, message: 'unauthorized access' });
 
-        const userInfo = await admin.auth().verifyIdToken(token);
-        req.tokenEmail = userInfo.email;
-        next();
-    } catch (err) {
-        console.error('Firebase token verify error:', err);
-        res.status(403).send({ error: true, message: 'forbidden access' });
-    }
-}
+//         const userInfo = await admin.auth().verifyIdToken(token);
+//         req.tokenEmail = userInfo.email;
+//         next();
+//     } catch (err) {
+//         console.error('Firebase token verify error:', err);
+//         res.status(403).send({ error: true, message: 'forbidden access' });
+//     }
+// }
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.kogn06a.mongodb.net/?appName=Cluster0`;
 
@@ -110,11 +110,7 @@ async function run() {
 
 
         // jobs API
-        app.get('/jobs', verifyFirebaseToken, async (req, res) => {
-
-            if (req.tokenEmail !== req.query.email) {
-                return res.status(403).send({ error: true, message: 'forbidden access' });
-            }
+        app.get('/jobs',  async (req, res) => {
 
             const email = req.query.email;
             let query = {};
@@ -186,8 +182,8 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        // await client.db("admin").command({ ping: 1 });
-        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        await client.db("admin").command({ ping: 1 });
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
